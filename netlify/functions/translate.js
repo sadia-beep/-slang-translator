@@ -22,6 +22,7 @@ export async function handler(event) {
   const glossary = `
 GLOSSARY (use these actual meanings, not literal word meanings):
 - "aura" / "aura points" = one's overall vibe, presence, confidence, or reputation (e.g. "that took away his aura" = that made him look less impressive/confident)
+- "diabolical" (as slang) = extremely bad, shocking, outrageous, or wild — used hyperbolically, not literally evil (e.g. "that's actually diabolical" = "that is deeply concerning / highly inappropriate")
 - "ate" / "ate that" = did something excellently, performed impressively
 - "no cap" / "cap" = no lie / a lie (e.g. "that's cap" = that's false)
 - "fr" / "fr fr" = for real, seriously
@@ -49,7 +50,7 @@ GLOSSARY (use these actual meanings, not literal word meanings):
 `;
 
   const systemPrompt = isToFormal
-    ? `You translate Gen-Z slang / internet "brainrot" text into polished, professional formal English suitable for a workplace email. You must translate the ACTUAL MEANING of slang terms, never their literal dictionary definition — for example "he thought he ate" means "he believed he had performed excellently," NOT anything about literal eating. CRITICAL RULE: every single slang, informal, or internet-brainrot word or phrase in the input must be replaced with its formal equivalent in the output — never leave a slang word sitting untranslated in the final sentence, even if it isn't in the glossary below; use your best judgment for its formal meaning. The output should read as fully professional English with zero slang remaining. Use the glossary for reference and apply the same logic to slang terms not listed. Keep the original intent and tone exactly. Do not add commentary.
+    ? `You translate Gen-Z slang / internet "brainrot" text into polished, professional formal English suitable for a workplace email. You must translate the ACTUAL MEANING of slang terms, never their literal dictionary definition — for example "he thought he ate" means "he believed he had performed excellently," NOT anything about literal eating. CRITICAL RULE: every single slang, informal, or internet-brainrot word or phrase in the input must be replaced with its formal equivalent in the output — never leave a slang word sitting untranslated in the final sentence, even if it isn't in the glossary below; use your best judgment for its formal meaning. This applies even when a slang word is technically also a real dictionary word (like "diabolical" used hyperbolically) — do not just fix capitalization/punctuation and call it translated; you must genuinely rephrase the sentence into different, more formal wording that conveys the same sentiment. The output should read as fully professional English with zero slang remaining, and it should NOT be nearly identical to the input except for a capital letter. Use the glossary for reference and apply the same logic to slang terms not listed. Keep the original intent and tone exactly. Do not add commentary.
 ${glossary}
 EXAMPLES:
 Input: "bro thought he ate with that presentation"
@@ -59,6 +60,10 @@ WRONG (do not do this): "He believed he had eaten during his presentation."
 Input: "Chat, deploy the emergency aura"
 Correct: "Team, please activate the emergency confidence protocol."
 WRONG (do not do this): "Please initiate the emergency aura." (leaves "aura" untranslated)
+
+Input: "That's actually diabolical"
+Correct: "That is deeply concerning."
+WRONG (do not do this): "That is actually diabolical." (just fixes punctuation, doesn't rephrase)
 
 Respond ONLY with strict JSON in this shape: {"translated": "...", "slangTermsFound": ["term1", "term2"]} where slangTermsFound lists the slang/informal terms you detected and replaced (lowercase, no duplicates).`
     : `You translate formal, professional English into current Gen-Z slang / internet "brainrot" style, playful and casual. Use real, currently-used slang (see glossary below for style reference) rather than outdated or made-up slang. Keep the original meaning and intent exactly. Do not add commentary.
