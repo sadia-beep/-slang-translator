@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 
 const EXAMPLES_SLANG = [
   "ngl this meeting could've been an email fr fr",
@@ -16,9 +16,16 @@ export default function App() {
   const [direction, setDirection] = useState("toFormal"); // toFormal | toSlang
   const [input, setInput] = useState("");
   const [output, setOutput] = useState("");
+  const [typedOutput, setTypedOutput] = useState("");
   const [slangCount, setSlangCount] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [pressed, setPressed] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const leftPanelRef = useRef(null);
+  const rightPanelRef = useRef(null);
+  const typeTimerRef = useRef(null);
 
   const isToFormal = direction === "toFormal";
 
@@ -26,8 +33,47 @@ export default function App() {
     ? EXAMPLES_SLANG[Math.floor(Math.random() * EXAMPLES_SLANG.length)]
     : EXAMPLES_FORMAL[Math.floor(Math.random() * EXAMPLES_FORMAL.length)];
 
+  // Typewriter reveal whenever a fresh output arrives
+  useEffect(() => {
+    if (typeTimerRef.current) clearInterval(typeTimerRef.current);
+    if (!output) {
+      setTypedOutput("");
+      return;
+    }
+    setTypedOutput("");
+    let i = 0;
+    typeTimerRef.current = setInterval(() => {
+      i += 1;
+      setTypedOutput(output.slice(0, i));
+      if (i >= output.length) clearInterval(typeTimerRef.current);
+    }, 18);
+    return () => clearInterval(typeTimerRef.current);
+  }, [output]);
+
+  // Mouse-follow tilt for both panels
+  function handleTilt(e, ref) {
+    const el = ref.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width - 0.5; // -0.5 to 0.5
+    const y = (e.clientY - rect.top) / rect.height - 0.5;
+    el.style.setProperty("--tiltX", `${(-y * 5).toFixed(2)}deg`);
+    el.style.setProperty("--tiltY", `${(x * 5).toFixed(2)}deg`);
+    el.style.setProperty("--glowX", `${(x + 0.5) * 100}%`);
+    el.style.setProperty("--glowY", `${(y + 0.5) * 100}%`);
+  }
+
+  function resetTilt(ref) {
+    const el = ref.current;
+    if (!el) return;
+    el.style.setProperty("--tiltX", "0deg");
+    el.style.setProperty("--tiltY", "0deg");
+  }
+
   async function handleTranslate() {
     if (!input.trim()) return;
+    setPressed(true);
+    setTimeout(() => setPressed(false), 220);
     setLoading(true);
     setError("");
     setOutput("");
@@ -52,7 +98,15 @@ export default function App() {
     setDirection(isToFormal ? "toSlang" : "toFormal");
     setInput(output || "");
     setOutput("");
+    setTypedOutput("");
     setSlangCount(0);
+  }
+
+  function handleCopy() {
+    if (!output) return;
+    navigator.clipboard.writeText(output);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1400);
   }
 
   return (
@@ -67,15 +121,26 @@ export default function App() {
       </header>
 
       <main className="stage">
-        <section className={`panel panel-left ${isToFormal ? "panel-active" : "panel-quiet"}`}>
+        <section
+          ref={leftPanelRef}
+          className={`panel panel-left panel-tilt ${isToFormal ? "panel-active" : "panel-quiet"}`}
+          onMouseMove={(e) => isToFormal && handleTilt(e, leftPanelRef)}
+          onMouseLeave={() => resetTilt(leftPanelRef)}
+        >
+          <div className="panel-glow" aria-hidden="true" />
           <div className="panel-label">
             <span className="panel-index">01</span>
             <span>BRAINROT INPUT</span>
+            {!isToFormal && output && (
+              <button className="copy-btn" onClick={handleCopy} aria-label="Copy output">
+                {copied ? "copied ✓" : "copy"}
+              </button>
+            )}
           </div>
           <textarea
             className="panel-textarea slang-font"
             placeholder={isToFormal ? placeholder : "your formal text lands here after swap ✨"}
-            value={isToFormal ? input : output}
+            value={isToFormal ? input : typedOutput}
             onChange={(e) => isToFormal && setInput(e.target.value)}
             readOnly={!isToFormal}
           />
@@ -83,7 +148,7 @@ export default function App() {
 
         <div className="knob-column">
           <button
-            className="knob"
+            className={`knob ${pressed ? "knob-pressed" : ""}`}
             onClick={handleTranslate}
             disabled={loading || !input.trim()}
             aria-label="Translate"
@@ -98,7 +163,7 @@ export default function App() {
             ⇅ swap
           </button>
 
-          <div className="chaos-meter" aria-hidden="true">
+          <div className={`chaos-meter ${slangCount > 0 ? "chaos-active" : ""}`} aria-hidden="true">
             <div className="chaos-label">chaos detected</div>
             <div className="chaos-track">
               <div
@@ -110,15 +175,26 @@ export default function App() {
           </div>
         </div>
 
-        <section className={`panel panel-right ${!isToFormal ? "panel-active" : "panel-quiet"}`}>
+        <section
+          ref={rightPanelRef}
+          className={`panel panel-right panel-tilt ${!isToFormal ? "panel-active" : "panel-quiet"}`}
+          onMouseMove={(e) => !isToFormal && handleTilt(e, rightPanelRef)}
+          onMouseLeave={() => resetTilt(rightPanelRef)}
+        >
+          <div className="panel-glow" aria-hidden="true" />
           <div className="panel-label">
             <span className="panel-index">02</span>
             <span>BOARDROOM OUTPUT</span>
+            {isToFormal && output && (
+              <button className="copy-btn" onClick={handleCopy} aria-label="Copy output">
+                {copied ? "copied ✓" : "copy"}
+              </button>
+            )}
           </div>
           <textarea
             className="panel-textarea formal-font"
             placeholder={!isToFormal ? placeholder : "your translation lands here"}
-            value={!isToFormal ? input : output}
+            value={!isToFormal ? input : typedOutput}
             onChange={(e) => !isToFormal && setInput(e.target.value)}
             readOnly={isToFormal}
           />
