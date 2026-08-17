@@ -109,7 +109,14 @@ body {
 
 .panel-left {
   background: linear-gradient(160deg, var(--chaos-1) 0%, var(--chaos-2) 55%, var(--chaos-3) 100%);
+  background-size: 200% 200%;
   color: var(--chaos-ink);
+  animation: chaos-shift 8s ease-in-out infinite;
+}
+
+@keyframes chaos-shift {
+  0%, 100% { background-position: 0% 0%; }
+  50% { background-position: 100% 100%; }
 }
 
 .panel-left .panel-index {
@@ -129,6 +136,74 @@ body {
 
 .panel-quiet {
   position: relative;
+}
+
+.panel-tilt {
+  --tiltX: 0deg;
+  --tiltY: 0deg;
+  --glowX: 50%;
+  --glowY: 50%;
+  transform: perspective(900px) rotateX(var(--tiltX)) rotateY(var(--tiltY));
+  transition: transform 0.15s ease-out;
+  will-change: transform;
+  overflow: hidden;
+}
+
+.panel-glow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    circle at var(--glowX) var(--glowY),
+    rgba(255, 255, 255, 0.16),
+    transparent 45%
+  );
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  z-index: 0;
+}
+
+.panel-active:hover .panel-glow {
+  opacity: 1;
+}
+
+.panel-textarea.formal-font::after,
+.slang-font {
+  caret-color: currentColor;
+}
+
+.copy-btn {
+  margin-left: auto;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: inherit;
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  padding: 4px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+
+.copy-btn:hover {
+  background: rgba(255, 255, 255, 0.22);
+  transform: translateY(-1px);
+}
+
+.knob-pressed {
+  transform: scale(0.88) rotate(8deg) !important;
+  box-shadow: 0 0 0 10px rgba(176, 141, 87, 0.28) !important;
+}
+
+.chaos-active .chaos-fill {
+  box-shadow: 0 0 12px 1px rgba(255, 62, 165, 0.55);
+  animation: chaos-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes chaos-pulse {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.35); }
 }
 
 .panel-quiet::after {
